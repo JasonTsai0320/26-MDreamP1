@@ -258,7 +258,7 @@
                         document.getElementById('view-home').classList.add('active'); 
                         loadData();
                     }, 500);
-                } else { alert("驗證失敗或系統錯誤"); localStorage.clear(); location.reload(); }
+                } else { alert("系統訊息：" + (json.message || "未知錯誤")); localStorage.clear(); location.reload();; }
             } catch(e) { console.error(e); showToast("連線錯誤：請檢查 GAS_URL"); }
             document.getElementById('loading').style.display = 'none';
         }
