@@ -6,25 +6,38 @@
     <title>Dream Mobile</title>
     <style>
         :root { --primary: #4A90E2; --bg: #F2F5F9; }
-        body { margin: 0; background: var(--bg); font-family: -apple-system, sans-serif; }
+        body { margin: 0; background: var(--bg); font-family: -apple-system, sans-serif; color: #333; }
+        
+        /* 頁面切換 */
         .view { display: none; opacity: 0; transition: 0.4s; }
         .view.active { display: block; opacity: 1; }
+
+        /* 登入介面 */
         #login-screen { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; background: white; }
-        .pin-dot-input { width: 200px; padding: 15px; font-size: 24px; text-align: center; border: 2px solid #eee; border-radius: 15px; margin-bottom: 20px; outline: none; }
+        .pin-input { width: 200px; padding: 15px; font-size: 24px; text-align: center; border: 2px solid #eee; border-radius: 15px; margin-bottom: 20px; outline: none; }
         .btn-blue { background: var(--primary); color: white; border: none; padding: 15px 60px; border-radius: 12px; font-weight: bold; cursor: pointer; }
+
+        /* 主介面視覺 */
         .header { padding: 40px 24px 20px; display: flex; justify-content: space-between; align-items: flex-end; }
         .user-title { font-size: 26px; font-weight: 800; }
         .days-circle { font-size: 38px; font-weight: 800; color: var(--primary); }
+        
         .task-card { background: white; margin: 0 20px 12px; padding: 18px; border-radius: 18px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; align-items: center; }
-        .check-box { width: 24px; height: 24px; border: 2px solid #ddd; border-radius: 50%; margin-right: 15px; }
-        .check-box.done { background: var(--primary); border-color: var(--primary); }
+        .check-box { width: 24px; height: 24px; border: 2px solid #ddd; border-radius: 50%; margin-right: 15px; transition: 0.3s; }
+        .check-box.done { background: var(--primary); border-color: var(--primary); position: relative; }
+        .check-box.done::after { content: '✓'; color: white; position: absolute; left: 5px; top: 0px; font-size: 16px; }
+        .task-name { flex: 1; font-weight: 500; font-size: 16px; }
+        .task-name.done { color: #ccc; text-decoration: line-through; }
+        
+        .task-hidden { display: none !important; }
+        .more-btn { text-align: center; color: var(--primary); font-weight: bold; padding: 10px; cursor: pointer; font-size: 14px; }
     </style>
 </head>
 <body>
 
     <div id="login-screen" class="view active">
         <h2 style="color:var(--primary)">夢想機 啟動</h2>
-        <input type="password" id="pin-input" class="pin-dot-input" placeholder="••••" maxlength="4">
+        <input type="password" id="pin-input" class="pin-input" placeholder="••••" maxlength="4" inputmode="numeric">
         <button class="btn-blue" onclick="initSystem()">進入系統</button>
     </div>
 
@@ -39,16 +52,17 @@
                 <div style="font-size:12px; color:#888;">剩餘挑戰天數</div>
             </div>
         </div>
-        <div id="task-list-area" style="padding-bottom:100px;">
-            <h4 style="margin:20px; color:#666;">今日任務</h4>
-            <div id="task-list"></div>
+
+        <div id="task-area" style="padding-bottom:100px;">
+            <h4 style="margin:20px; color:#666;">今日任務清單</h4>
+            <div id="task-list">
+                </div>
         </div>
     </div>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const SHEET_ID = urlParams.get('id');
-        // 請確保 API 網址最新且正確
         const API_URL = "https://script.google.com/macros/s/AKfycbwEA2bbL94YtNbunJj_Dej5UidtvExIKm28tctKsdEOUIuIdfBpNkHGCr0WXQLQzBVYew/exec";
         
         let USER_PIN = localStorage.getItem("dm_pin");
@@ -61,43 +75,31 @@
             if (!USER_PIN) return;
 
             try {
-                // 1. 抓取基本資料
+                // 抓取摘要資訊
                 const resSum = await fetch(`${API_URL}?action=getSummary&id=${SHEET_ID}&pin=${USER_PIN}`);
                 const dataSum = await resSum.json();
 
                 if (dataSum.status === "success") {
                     localStorage.setItem("dm_pin", USER_PIN);
                     
-                    // --- 核心防錯：先檢查標籤是否存在再賦值 ---
+                    // 安全填入數據
                     const nameEl = document.getElementById('user-display');
                     const daysEl = document.getElementById('days-val');
-                    const loginDiv = document.getElementById('login-screen');
-                    const homeDiv = document.getElementById('view-home');
+                    if(nameEl) nameEl.innerText = "您好！ " + dataSum.data.nickname;
+                    if(daysEl) daysEl.innerText = dataSum.data.remainingDays;
 
-                    if (!nameEl || !daysEl || !loginDiv || !homeDiv) {
-                        throw new Error("HTML 標籤 ID (user-display/days-val/login-screen/view-home) 有誤，請檢查 HTML 部份。");
-                    }
+                    // 切換視圖
+                    document.getElementById('login-screen').style.display = 'none';
+                    document.getElementById('view-home').classList.add('active');
 
-                    // 填入數據
-                    nameEl.innerText = "您好！ " + dataSum.data.nickname;
-                    daysEl.innerText = dataSum.data.remainingDays;
-
-                    // 切換畫面
-                    loginDiv.style.display = 'none';
-                    homeDiv.classList.add('active');
-
-                    // 2. 異步載入任務 (失敗也不會卡住主畫面)
-                    fetchTasks(); 
+                    // 異步載入任務 (3+N 邏輯)
+                    fetchTasks();
                 } else {
-                    alert("驗證失敗：驗證碼不正確");
+                    alert("驗證失敗：密碼不正確");
                     localStorage.removeItem("dm_pin");
                     location.reload();
                 }
-            } catch (e) { 
-                // 改進：顯示精確錯誤訊息
-                alert("診斷報告：\n" + e.name + ": " + e.message);
-                console.error(e);
-            }
+            } catch (e) { alert("連線錯誤，請確認網路環境"); }
         }
 
         async function fetchTasks() {
@@ -108,18 +110,27 @@
                 if (!list || dataTask.status !== "success") return;
 
                 list.innerHTML = "";
-                dataTask.data.forEach((t) => {
+                dataTask.data.forEach((t, i) => {
                     const card = document.createElement('div');
-                    card.className = `task-card`;
+                    card.className = `task-card ${i >= 3 ? 'task-hidden' : ''}`;
                     card.innerHTML = `
                         <div class="check-box ${t.isDone ? 'done' : ''}"></div>
-                        <div style="flex:1" class="${t.isDone ? 'done' : ''}">${t.name}</div>
+                        <div class="task-name ${t.isDone ? 'done' : ''}" style="flex:1">${t.name}</div>
                     `;
                     list.appendChild(card);
                 });
-            } catch (e) {
-                console.warn("任務清單讀取有誤，但不影響主頁面。");
-            }
+
+                if (dataTask.data.length > 3) {
+                    const more = document.createElement('div');
+                    more.className = 'more-btn';
+                    more.innerText = `顯示其餘 ${dataTask.data.length - 3} 個任務...`;
+                    more.onclick = () => {
+                        document.querySelectorAll('.task-hidden').forEach(el => el.classList.remove('task-hidden'));
+                        more.style.display = 'none';
+                    };
+                    list.appendChild(more);
+                }
+            } catch (e) { console.warn("任務讀取異常"); }
         }
     </script>
 </body>
