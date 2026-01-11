@@ -5,68 +5,85 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Dream Mobile 定案版</title>
     <style>
+        /* 直接沿用您定案版的所有視覺變數與手機框架設定 [cite: 1-20] */
         :root {
-            --primary: #4A90E2; --gold: #C1A258; --danger: #FF6B6B; --bg: #F9F9F9;
-            --card: #FFFFFF; --text-main: #333333; --text-sub: #86868B;
+            --primary: #4A90E2; --gold: #C1A258; --danger: #FF6B6B; --danger-bg: rgba(255, 107, 107, 0.08); 
+            --bg: #F9F9F9; --card: #FFFFFF; --text-main: #333333; --text-sub: #86868B;
             --shadow: 0 4px 20px rgba(0,0,0,0.05);
+            --font-main: -apple-system, sans-serif;
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; user-select: none; }
-        html, body { margin: 0; padding: 0; background-color: #E0E0E0; height: 100dvh; overflow: hidden; display: flex; justify-content: center; }
+        html, body { margin: 0; padding: 0; font-family: var(--font-main); background-color: #E0E0E0; height: 100dvh; width: 100%; overflow: hidden; display: flex; justify-content: center; }
+
         .app-container { width: 100%; max-width: 480px; background-color: var(--bg); height: 100%; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 40px rgba(0,0,0,0.2); overflow: hidden; }
-        
-        /* 視圖切換動畫 [cite: 11-14] */
         .view-section { display: none; width: 100%; height: 100%; flex-direction: column; overflow: hidden; animation: fadeIn 0.4s ease-out; }
         .view-section.active { display: flex; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* 沿用您的元件樣式 [cite: 41-80] */
-        .header-row { padding: 40px 24px 10px; display: flex; justify-content: space-between; align-items: flex-end; }
-        .token-ring-wrap { width: 120px; height: 120px; background: linear-gradient(135deg, #E8F1FA, #F2F7FF); border: 4px solid #DCE9F6; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 15px auto; box-shadow: 0 8px 25px rgba(74, 144, 226, 0.2); }
-        .task-item { background: var(--card); border-radius: 16px; padding: 16px; margin: 0 20px 10px; display: flex; align-items: center; box-shadow: var(--shadow); }
-        .task-checkbox { width: 22px; height: 22px; border: 2px solid #E5E5EA; border-radius: 50%; margin-right: 12px; }
-        .task-item.done .task-checkbox { background: var(--primary); border-color: var(--primary); }
-        
         /* 登入頁樣式 [cite: 21-35] */
         #login-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #FAFAFA; z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .login-input { width: 80%; padding: 16px; font-size: 18px; border: 1px solid #E5E5EA; border-radius: 16px; margin-bottom: 20px; text-align: center; }
-        .login-btn { background: var(--primary); color: #fff; border: none; padding: 16px 40px; border-radius: 50px; font-size: 18px; font-weight: 600; width: 80%; }
+        .login-input { width: 85%; max-width: 320px; padding: 16px; font-size: 18px; border: 1px solid #E5E5EA; background: #F2F2F7; border-radius: 16px; margin-bottom: 20px; text-align: center; }
+        .login-btn { background: var(--primary); color: #fff; border: none; padding: 16px 0; border-radius: 50px; font-size: 18px; font-weight: 600; cursor: pointer; width: 85%; max-width: 320px; box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3); }
+
+        /* 主頁標頭樣式 [cite: 51-58, 126-128] */
+        .daily-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 20px 24px; }
+        .user-greeting { font-size: 14px; color: var(--gold); font-weight: 700; margin-bottom: 4px; }
+        .count-num { font-size: 36px; font-weight: 700; color: var(--primary); }
+        
+        /* 進度環元件 [cite: 118-120] */
+        .progress-card { background: var(--card); border-radius: 20px; padding: 20px; margin: 0 20px 16px; box-shadow: var(--shadow); text-align: center; }
+
+        /* 任務清單樣式 [cite: 68-75] */
+        .task-item { background: var(--card); border-radius: 16px; padding: 14px 18px; margin: 0 20px 10px; display: flex; align-items: center; box-shadow: var(--shadow); }
+        .task-checkbox { width: 22px; height: 22px; border: 2px solid #E5E5EA; border-radius: 50%; margin-right: 12px; }
+        .task-item.done .task-checkbox { background: var(--primary); border-color: var(--primary); position: relative; }
+        .task-item.done .task-checkbox::after { content:'✔'; color:#fff; font-size:12px; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); }
+        .task-name { font-size: 15px; font-weight: 600; color: var(--text-main); }
+        .task-item.done .task-name { text-decoration: line-through; color: #CCC; }
     </style>
 </head>
 <body>
 
     <div class="app-container">
         <div id="login-screen">
-            <h1 style="font-weight:800; color:#333;">Dream Mobile</h1>
-            <p style="color:#999; letter-spacing:2px;">驗證身分啟動系統</p>
-            <input type="password" id="pin-input" class="login-input" placeholder="請輸入 4 位數驗證碼" maxlength="4">
-            <button class="login-btn" onclick="handleStart()">啟動系統</button>
-            <div style="margin-top:140px; color:var(--gold); font-weight:700;">iTree</div>
+            <h1 style="font-size: 32px; font-weight: 800; margin: 0;">Dream Mobile</h1>
+            <div style="font-size: 20px; color: #999; margin: 8px 0 40px 0;">夢想機</div>
+            <input type="password" id="pin-input" class="login-input" placeholder="請輸入驗證碼" maxlength="4">
+            <button class="login-btn" onclick="initApp()">啟動系統</button>
+            <div style="margin-top: 140px; color: var(--gold); font-weight: 700;">iTree</div>
         </div>
 
         <div id="view-home" class="view-section">
-            <div class="header-row">
+            <header class="daily-header">
                 <div>
-                    <div id="display-name" style="font-size:24px; font-weight:900;">載入中...</div>
-                    <div style="font-size:14px; color:#888; font-weight:600;">因行動而美好</div>
+                    <div style="font-size:28px; font-weight:900;">Today</div>
+                    <div id="display-date" style="font-size:14px; font-weight:600; color:#888;">01/11 (週日)</div>
                 </div>
                 <div style="text-align:right">
-                    <div id="display-days" style="font-size:36px; font-weight:800; color:var(--primary);">--</div>
-                    <div style="font-size:11px; color:#999;">挑戰剩餘天數</div>
+                    <div id="user-display" class="user-greeting">您好！ JP</div>
+                    <div id="days-val" class="count-num">76</div>
+                    <div style="font-size:11px; color:#999;">12週倒數 (剩餘)</div>
                 </div>
-            </div>
+            </header>
 
-            <div style="flex:1; overflow-y:auto; padding: 10px 0;">
-                <div class="token-ring-wrap">
-                    <div id="display-progress" style="font-size:40px; font-weight:900; color:var(--gold);">20%</div>
+            <div style="flex:1; overflow-y:auto;">
+                <div class="progress-card">
+                    <div style="font-size:13px; font-weight:700; color:#888; margin-bottom:12px;">12週挑戰進度</div>
+                    <svg width="100" height="100" viewBox="0 0 100 100" style="margin:0 auto; display:block;"> 
+                        <circle cx="50" cy="50" r="45" stroke="#E5E5EA" stroke-width="8" fill="none"/>
+                        <circle id="ring-fill" cx="50" cy="50" r="45" stroke="#4A90E2" stroke-width="8" fill="none" stroke-dasharray="283" stroke-dashoffset="283" transform="rotate(-90 50 50)" style="transition: stroke-dashoffset 1s ease;"/>
+                        <text x="50" y="55" text-anchor="middle" font-size="18" font-weight="800" fill="#4A90E2" id="progress-text">0%</text>
+                    </svg>
                 </div>
-                
-                <div id="task-list" style="margin-top:20px;">
-                    <h4 style="margin: 0 24px 12px; color:#666;">今日 3+N 任務</h4>
-                    </div>
+
+                <div id="task-list-container">
+                    <h4 style="margin: 20px 24px 12px; font-size:18px; font-weight:800;">今日任務</h4>
+                    <div id="task-list"></div>
+                </div>
             </div>
 
             <div style="padding: 20px; text-align:center;">
-                <button onclick="localStorage.clear(); location.reload();" style="background:none; border:none; color:var(--danger); font-weight:600;">⚠ 重置系統 / 登出</button>
+                <button onclick="localStorage.clear(); location.reload();" style="border: 1px solid var(--danger); color: var(--danger); background: var(--danger-bg); padding: 8px 20px; border-radius: 30px; font-size: 13px; font-weight: 600;">⚠ 重置系統 / 登出</button>
             </div>
         </div>
     </div>
@@ -74,43 +91,44 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const SHEET_ID = urlParams.get('id');
-        // 使用我們測試成功的 API 網址
         const API_URL = "https://script.google.com/macros/s/AKfycbwEA2bbL94YtNbunJj_Dej5UidtvExIKm28tctKsdEOUIuIdfBpNkHGCr0WXQLQzBVYew/exec";
+        
+        let SAVED_PIN = localStorage.getItem("dm_pin");
 
-        window.onload = () => {
-            const saved = localStorage.getItem("dm_pin");
-            if (saved && SHEET_ID) handleStart(saved);
-            else if (!SHEET_ID) alert("請從試算表點擊按鈕啟動");
-        };
+        window.onload = () => { if (SAVED_PIN) initApp(SAVED_PIN); };
 
-        async function handleStart(autoPin = null) {
+        async function initApp(autoPin = null) {
             const pin = autoPin || document.getElementById('pin-input').value;
-            if (!pin) return alert("請輸入驗證碼");
+            if (!pin) return;
 
             try {
-                // 執行您已經測試成功的 getSummary 請求
+                // 1. 抓取摘要
                 const res = await fetch(`${API_URL}?action=getSummary&id=${SHEET_ID}&pin=${pin}`);
                 const json = await res.json();
 
                 if (json.status === "success") {
                     localStorage.setItem("dm_pin", pin);
                     
-                    // 填入資料，對齊「定案版」的欄位 [cite: 127, 128]
-                    document.getElementById('display-name').innerText = "您好！ " + json.data.nickname;
-                    document.getElementById('display-days').innerText = json.data.remainingDays;
-                    document.getElementById('display-progress').innerText = (json.data.progress / 100) + "%";
+                    // 填入資料
+                    document.getElementById('user-display').innerText = "您好！ " + json.data.nickname;
+                    document.getElementById('days-val').innerText = json.data.remainingDays;
+                    
+                    // 更新進度環 [cite: 119]
+                    const percent = json.data.progress / 100; // 假設 2000 代表 20%
+                    const offset = 283 - (283 * (percent / 100));
+                    document.getElementById('ring-fill').style.strokeDashoffset = offset;
+                    document.getElementById('progress-text').textContent = percent + "%";
 
-                    // 切換畫面
+                    // 切換視圖
                     document.getElementById('login-screen').style.display = 'none';
                     document.getElementById('view-home').classList.add('active');
 
-                    // 載入任務 [cite: 167]
                     fetchTasks(pin);
                 } else {
                     alert("驗證失敗");
                     localStorage.clear();
                 }
-            } catch (e) { alert("系統連線中..."); }
+            } catch (e) { console.error(e); }
         }
 
         async function fetchTasks(pin) {
@@ -120,16 +138,17 @@
                 const list = document.getElementById('task-list');
                 if (!list || json.status !== "success") return;
 
+                list.innerHTML = "";
                 json.data.forEach(t => {
-                    const div = document.createElement('div');
-                    div.className = `task-item ${t.isDone ? 'done' : ''}`;
-                    div.innerHTML = `
+                    const item = document.createElement('div');
+                    item.className = `task-item ${t.isDone ? 'done' : ''}`;
+                    item.innerHTML = `
                         <div class="task-checkbox"></div>
-                        <div style="flex:1; font-weight:600; ${t.isDone ? 'color:#ccc;text-decoration:line-through' : ''}">${t.name}</div>
+                        <div class="task-name">${t.name}</div>
                     `;
-                    list.appendChild(div);
+                    list.appendChild(item);
                 });
-            } catch (e) { console.warn("任務讀取中"); }
+            } catch (e) { console.warn("任務載入中..."); }
         }
     </script>
 </body>
