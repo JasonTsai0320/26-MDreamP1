@@ -3,118 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Dream Mobile v2.1</title>
+    <title>Dream Mobile 定案版</title>
     <style>
-        :root { --primary: #007AFF; --bg: #E3F2FD; }
-        body { margin: 0; background: var(--bg); font-family: -apple-system, sans-serif; }
-        .header-bar { background: var(--primary); color: white; padding: 40px 20px 20px; text-align: left; border-radius: 0 0 30px 30px; }
-        .version-tag { background: #FF3B30; color: white; padding: 2px 8px; border-radius: 5px; font-size: 10px; float: right; }
-        .view { display: none; padding: 20px; }
-        .view.active { display: block !important; }
-        .task-card { background: white; margin-bottom: 15px; padding: 18px; border-radius: 20px; display: flex; align-items: center; }
-        .circle { width: 22px; height: 22px; border: 2px solid #ddd; border-radius: 50%; margin-right: 15px; }
-        .circle.done { background: var(--primary); border-color: var(--primary); }
+        :root {
+            --primary: #4A90E2; --gold: #C1A258; --danger: #FF6B6B; --bg: #F9F9F9;
+            --card: #FFFFFF; --text-main: #333333; --text-sub: #86868B;
+            --shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; user-select: none; }
+        html, body { margin: 0; padding: 0; background-color: #E0E0E0; height: 100dvh; overflow: hidden; display: flex; justify-content: center; }
+        .app-container { width: 100%; max-width: 480px; background-color: var(--bg); height: 100%; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 40px rgba(0,0,0,0.2); overflow: hidden; }
+        
+        /* 視圖切換動畫 [cite: 11-14] */
+        .view-section { display: none; width: 100%; height: 100%; flex-direction: column; overflow: hidden; animation: fadeIn 0.4s ease-out; }
+        .view-section.active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 沿用您的元件樣式 [cite: 41-80] */
+        .header-row { padding: 40px 24px 10px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .token-ring-wrap { width: 120px; height: 120px; background: linear-gradient(135deg, #E8F1FA, #F2F7FF); border: 4px solid #DCE9F6; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 15px auto; box-shadow: 0 8px 25px rgba(74, 144, 226, 0.2); }
+        .task-item { background: var(--card); border-radius: 16px; padding: 16px; margin: 0 20px 10px; display: flex; align-items: center; box-shadow: var(--shadow); }
+        .task-checkbox { width: 22px; height: 22px; border: 2px solid #E5E5EA; border-radius: 50%; margin-right: 12px; }
+        .task-item.done .task-checkbox { background: var(--primary); border-color: var(--primary); }
+        
+        /* 登入頁樣式 [cite: 21-35] */
+        #login-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #FAFAFA; z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .login-input { width: 80%; padding: 16px; font-size: 18px; border: 1px solid #E5E5EA; border-radius: 16px; margin-bottom: 20px; text-align: center; }
+        .login-btn { background: var(--primary); color: #fff; border: none; padding: 16px 40px; border-radius: 50px; font-size: 18px; font-weight: 600; width: 80%; }
     </style>
 </head>
 <body>
 
-    <div id="login-view" class="view active" style="text-align:center; background:white; height:100vh; padding-top:100px;">
-        <span class="version-tag">診斷版 v2.1</span>
-        <h2 style="color:var(--primary)">夢想機 啟動</h2>
-        <input type="password" id="pin-input" style="width:150px; padding:15px; font-size:24px; text-align:center; border:2px solid #eee; border-radius:15px; margin:20px 0;" placeholder="••••" maxlength="4">
-        <br>
-        <button id="verify-btn" onclick="startApp()" style="background:var(--primary); color:white; border:none; padding:15px 50px; border-radius:15px; font-weight:bold;">驗證進入</button>
-    </div>
-
-    <div id="home-view" class="view">
-        <div class="header-bar">
-            <span class="version-tag">診斷版 v2.1</span>
-            <div id="name-txt" style="font-size:24px; font-weight:bold;">載入中...</div>
-            <div id="days-txt" style="font-size:48px; font-weight:bold; margin-top:5px;">-- 天</div>
+    <div class="app-container">
+        <div id="login-screen">
+            <h1 style="font-weight:800; color:#333;">Dream Mobile</h1>
+            <p style="color:#999; letter-spacing:2px;">驗證身分啟動系統</p>
+            <input type="password" id="pin-input" class="login-input" placeholder="請輸入 4 位數驗證碼" maxlength="4">
+            <button class="login-btn" onclick="handleStart()">啟動系統</button>
+            <div style="margin-top:140px; color:var(--gold); font-weight:700;">iTree</div>
         </div>
-        <div id="task-container" style="margin-top:20px;"></div>
+
+        <div id="view-home" class="view-section">
+            <div class="header-row">
+                <div>
+                    <div id="display-name" style="font-size:24px; font-weight:900;">載入中...</div>
+                    <div style="font-size:14px; color:#888; font-weight:600;">因行動而美好</div>
+                </div>
+                <div style="text-align:right">
+                    <div id="display-days" style="font-size:36px; font-weight:800; color:var(--primary);">--</div>
+                    <div style="font-size:11px; color:#999;">挑戰剩餘天數</div>
+                </div>
+            </div>
+
+            <div style="flex:1; overflow-y:auto; padding: 10px 0;">
+                <div class="token-ring-wrap">
+                    <div id="display-progress" style="font-size:40px; font-weight:900; color:var(--gold);">20%</div>
+                </div>
+                
+                <div id="task-list" style="margin-top:20px;">
+                    <h4 style="margin: 0 24px 12px; color:#666;">今日 3+N 任務</h4>
+                    </div>
+            </div>
+
+            <div style="padding: 20px; text-align:center;">
+                <button onclick="localStorage.clear(); location.reload();" style="background:none; border:none; color:var(--danger); font-weight:600;">⚠ 重置系統 / 登出</button>
+            </div>
+        </div>
     </div>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const SHEET_ID = urlParams.get('id');
+        // 使用我們測試成功的 API 網址
         const API_URL = "https://script.google.com/macros/s/AKfycbwEA2bbL94YtNbunJj_Dej5UidtvExIKm28tctKsdEOUIuIdfBpNkHGCr0WXQLQzBVYew/exec";
-        
-        // 頁面載入時檢查有沒有 ID
+
         window.onload = () => {
-            if (!SHEET_ID) {
-                alert("❌ 錯誤：網址中缺少 id 參數！\n請從試算表點擊按鈕開啟，或確認網址有 ?id=... ");
-            } else {
-                console.log("系統就緒，ID:", SHEET_ID);
-                const savedPin = localStorage.getItem("dm_pin");
-                if (savedPin) startApp(savedPin);
-            }
+            const saved = localStorage.getItem("dm_pin");
+            if (saved && SHEET_ID) handleStart(saved);
+            else if (!SHEET_ID) alert("請從試算表點擊按鈕啟動");
         };
 
-        async function startApp(autoPin = null) {
-            const btn = document.getElementById('verify-btn');
+        async function handleStart(autoPin = null) {
             const pin = autoPin || document.getElementById('pin-input').value;
-
-            if (!pin) return alert("請輸入 4 位數驗證碼");
-            if (!SHEET_ID) return alert("網址 ID 遺失，無法連線試算表");
-
-            // 改變按鈕狀態，讓使用者知道「有在動」
-            if (btn) {
-                btn.innerText = "驗證中...";
-                btn.style.opacity = "0.5";
-                btn.disabled = true;
-            }
+            if (!pin) return alert("請輸入驗證碼");
 
             try {
+                // 執行您已經測試成功的 getSummary 請求
                 const res = await fetch(`${API_URL}?action=getSummary&id=${SHEET_ID}&pin=${pin}`);
                 const json = await res.json();
 
                 if (json.status === "success") {
                     localStorage.setItem("dm_pin", pin);
                     
-                    document.getElementById('name-txt').innerText = "您好！ " + json.data.nickname;
-                    document.getElementById('days-txt').innerText = json.data.remainingDays + " 天";
+                    // 填入資料，對齊「定案版」的欄位 [cite: 127, 128]
+                    document.getElementById('display-name').innerText = "您好！ " + json.data.nickname;
+                    document.getElementById('display-days').innerText = json.data.remainingDays;
+                    document.getElementById('display-progress').innerText = (json.data.progress / 100) + "%";
 
-                    document.getElementById('login-view').style.display = 'none';
-                    document.getElementById('home-view').classList.add('active');
+                    // 切換畫面
+                    document.getElementById('login-screen').style.display = 'none';
+                    document.getElementById('view-home').classList.add('active');
 
+                    // 載入任務 [cite: 167]
                     fetchTasks(pin);
                 } else {
-                    alert("驗證失敗：" + (json.message || "密碼錯誤"));
-                    resetBtn(btn);
+                    alert("驗證失敗");
+                    localStorage.clear();
                 }
-            } catch (e) {
-                alert("連線發生錯誤：\n" + e.message);
-                resetBtn(btn);
-            }
-        }
-
-        function resetBtn(btn) {
-            if (btn) {
-                btn.innerText = "驗證進入";
-                btn.style.opacity = "1";
-                btn.disabled = false;
-            }
+            } catch (e) { alert("系統連線中..."); }
         }
 
         async function fetchTasks(pin) {
             try {
                 const res = await fetch(`${API_URL}?action=getTasks&id=${SHEET_ID}&pin=${pin}`);
                 const json = await res.json();
-                const container = document.getElementById('task-container');
-                if (!container || json.status !== "success") return;
+                const list = document.getElementById('task-list');
+                if (!list || json.status !== "success") return;
 
-                container.innerHTML = `<h4 style="color:#666;">今日任務</h4>`;
-                json.data.forEach((t) => {
-                    const card = document.createElement('div');
-                    card.className = "task-card";
-                    card.innerHTML = `
-                        <div class="circle ${t.isDone ? 'done' : ''}"></div>
-                        <div style="flex:1; ${t.isDone ? 'color:#ccc;text-decoration:line-through;' : ''}">${t.name}</div>
+                json.data.forEach(t => {
+                    const div = document.createElement('div');
+                    div.className = `task-item ${t.isDone ? 'done' : ''}`;
+                    div.innerHTML = `
+                        <div class="task-checkbox"></div>
+                        <div style="flex:1; font-weight:600; ${t.isDone ? 'color:#ccc;text-decoration:line-through' : ''}">${t.name}</div>
                     `;
-                    container.appendChild(card);
+                    list.appendChild(div);
                 });
-            } catch (e) { console.error("任務載入失敗"); }
+            } catch (e) { console.warn("任務讀取中"); }
         }
     </script>
 </body>
