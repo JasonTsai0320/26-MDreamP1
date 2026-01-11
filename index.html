@@ -2,59 +2,70 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>夢想機 診斷模式</title>
+    <title>夢想機 除錯模式</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; text-align: center; }
-        #app-content { display: none; border: 2px solid #4A90E2; padding: 20px; border-radius: 10px; }
-        .data-box { font-size: 24px; color: #4A90E2; font-weight: bold; margin: 10px 0; }
+        body { font-family: sans-serif; padding: 20px; text-align: center; background: #f0f4f8; }
+        .box { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        #view-app { display: none; } /* 初始隱藏，成功才開啟 */
+        .data-text { font-size: 24px; color: #4A90E2; font-weight: bold; }
     </style>
 </head>
 <body>
-    <h1>🚀 夢想機 連線測試</h1>
-    
-    <div id="login-box">
-        <p>請輸入驗證碼 (目前設定: 1234)</p>
-        <input type="password" id="pin-input" style="font-size:20px; width:100px; text-align:center;">
-        <button onclick="testConnection()" style="font-size:20px;">確認登入</button>
+    <h1>🚀 夢想機 系統診斷</h1>
+
+    <div id="login-screen" class="box">
+        <h3>身分驗證</h3>
+        <p>請輸入 4 位數驗證碼</p>
+        <input type="password" id="pin-input" style="font-size:24px; width:120px; text-align:center;" maxlength="4">
+        <br><br>
+        <button onclick="diagnoseApp()" style="padding:10px 20px; font-size:18px; background:#4A90E2; color:white; border:none; border-radius:8px;">進入系統</button>
     </div>
 
-    <div id="app-content">
-        <div class="data-box">暱稱：<span id="show-name">--</span></div>
-        <div class="data-box">倒數：<span id="show-days">--</span> 天</div>
-        <p style="color: green;">✅ 連線成功！您的資料已正確由 Google 傳回。</p>
+    <div id="view-app" class="box">
+        <p>✅ 系統已啟動！</p>
+        <div class="data-text">暱稱：<span id="name-field">--</span></div>
+        <div class="data-text">倒數：<span id="days-field">--</span> 天</div>
     </div>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const SHEET_ID = urlParams.get('id');
-        // 這是您測試成功的 API 網址
+        // 您測試成功的 API 網址
         const API_URL = "https://script.google.com/macros/s/AKfycbwEA2bbL94YtNbunJj_Dej5UidtvExIKm28tctKsdEOUIuIdfBpNkHGCr0WXQLQzBVYew/exec";
 
-        async function testConnection() {
+        async function diagnoseApp() {
             const pin = document.getElementById('pin-input').value;
-            alert("正在嘗試抓取資料，請稍候...");
+            if(!pin) return alert("請輸入密碼");
+
+            alert("【步驟 1】開始連線至 Google...");
 
             try {
-                const res = await fetch(`${API_URL}?action=getSummary&id=${SHEET_ID}&pin=${pin}`);
-                const json = await res.json();
+                // 發出連線請求
+                const response = await fetch(`${API_URL}?action=getSummary&id=${SHEET_ID}&pin=${pin}`);
+                alert("【步驟 2】Google 已回應，正在解析資料...");
                 
-                console.log("收到資料:", json);
+                const json = await response.json();
+                console.log("收到的原始資料:", json);
 
                 if (json.status === "success") {
-                    // 強制填入資料
-                    document.getElementById('show-name').innerText = json.data.nickname;
-                    document.getElementById('show-days').innerText = json.data.remainingDays;
+                    alert("【步驟 3】驗證成功！正在切換畫面...");
                     
-                    // 強制切換畫面
-                    document.getElementById('login-box').style.display = 'none';
-                    document.getElementById('app-content').style.display = 'block';
-                    
-                    alert("🎉 成功！抓到暱稱：" + json.data.nickname);
+                    // 填入資料
+                    document.getElementById('name-field').innerText = json.data.nickname;
+                    document.getElementById('show-name').innerText = json.data.nickname; // 預留原有名稱
+                    document.getElementById('name-field').innerText = json.data.nickname;
+                    document.getElementById('days-field').innerText = json.data.remainingDays;
+
+                    // 切換顯示
+                    document.getElementById('login-screen').style.display = 'none';
+                    document.getElementById('view-app').style.display = 'block';
+
+                    alert("【步驟 4】畫面切換完成！成功抓到：" + json.data.nickname);
                 } else {
                     alert("❌ 驗證失敗：" + json.message);
                 }
             } catch (e) {
-                alert("❌ 發生錯誤：" + e.message);
+                alert("❌ 發生錯誤：" + e.message + "\n請確認 API 是否已開啟「所有人」存取權限。");
             }
         }
     </script>
