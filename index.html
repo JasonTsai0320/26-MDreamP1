@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Dream Mobile</title>
+    <style>
+        /* [這裡請貼入您 260111-定案版前端.txt 的所有 CSS 樣式，此處省略以保持簡潔] */
+        :root { --primary: #4A90E2; --gold: #C1A258; --bg: #F9F9F9; }
+        /* ... (其餘樣式) ... */
+        .hidden-tasks { display: none; } /* 用於 3+N 隱藏區 */
+        .expand-btn { color: var(--primary); font-size: 13px; font-weight: 700; margin: 10px 0; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div id="loading" style="display:none;"><div class="spinner"></div></div>
+
+    <script>
+        // ==========================================
+        // 核心對接邏輯
+        // ==========================================
+        const urlParams = new URLSearchParams(window.location.search);
+        const SHEET_ID = urlParams.get('id');
+        const API_URL = "https://script.google.com/macros/s/AKfycbwEA2bbL94YtNbunJj_Dej5UidtvExIKm28tctKsdEOUIuIdfBpNkHGCr0WXQLQzBVYew/exec"; // 填入部署 Code.gs 後拿到的網址
+        
+        let USER_PIN = localStorage.getItem("dm_pin");
+        let currentOffset = 0;
+
+        window.onload = async () => {
+            if (!SHEET_ID) {
+                alert("❌ 偵測不到試算表 ID，請確認網址參數。");
+                return;
+            }
+            if (!USER_PIN) {
+                USER_PIN = prompt("🚀 歡迎啟動夢想機！請輸入您的 4 位數驗證碼：");
+                if (USER_PIN) localStorage.setItem("dm_pin", USER_PIN);
+            }
+            await initApp();
+        };
+
+        // 1. 初始化 App 並抓取今日摘要 [cite: 161-165]
+async function initApp() {
+    toggleLoading(true);
+    console.log("正在嘗試連線至 API:", API_URL);
+    console.log("使用的試算表 ID:", SHEET_ID);
+
+    try {
+        const res = await fetch(`${API_URL}?action=getSummary&id=${SHEET_ID}&pin=${USER_PIN}`);
+        const json = await res.json();
+        console.log("收到回應內容:", json);
+        
+        if (json.status === "auth_fail") {
+            alert("⚠️ 密碼驗證失敗，請檢查試算表 C7 欄位。");
+            localStorage.removeItem("dm_pin");
+            location.reload();
+            return;
+        }
+
+        if (json.status === "success") {
+            document.getElementById('user-display').innerText = "您好！ " + json.data.nickname;
+            document.querySelector('.count-num').innerText = json.data.remainingDays;
+            await loadTasks();
+        } else {
+            alert("⚠️ 系統回報錯誤：" + json.message);
+        }
+    } catch (e) {
+        console.error("Fetch 失敗原因:", e);
+        alert("❌ 連線失敗！\n1. 請檢查 API_URL 是否填對\n2. 請檢查試算表是否已設為「任何人可編輯」");
+    }
+    toggleLoading(false);
+}
+
+        // 2. 載入任務並執行 3+N 邏輯 [cite: 178-181]
+        async function loadTasks() {
+            const dateStr = new Date().toISOString().split('T')[0]; // 暫以今日測試
+            const res = await fetch(`${API_URL}?action=getTasks&id=${SHEET_ID}&pin=${USER_PIN}&date=${dateStr}`);
+            const json = await res.json();
+            
+            if (json.status === "success") {
+                renderTaskList(json.data);
+            }
+        }
+
+        // 3. 渲染清單 (3+N 實作) [cite: 178-181]
+        function renderTaskList(tasks) {
+            const container = document.getElementById('task-list');
+            container.innerHTML = "";
+            
+            tasks.forEach((task, index) => {
+                const taskEl = document.createElement('div');
+                taskEl.className = `task-item ${task.isDone ? 'done' : ''}`;
+                
+                // 超過 3 個則隱藏
+                if (index >= 3) {
+                    taskEl.classList.add('hidden-tasks');
+                }
+
+                taskEl.innerHTML = `
+                    <div class="task-checkbox"></div>
+                    <div class="task-name">${task.name}</div>
+                    <div class="action-icon">✎</div>
+                `;
+                container.appendChild(taskEl);
+            });
+
+            // 如果任務大於 3 個，增加展開按鈕
+            if (tasks.length > 3) {
+                const btn = document.createElement('div');
+                btn.className = 'expand-btn';
+                btn.innerText = `... 還有 ${tasks.length - 3} 個任務 (點擊展開)`;
+                btn.onclick = () => {
+                    document.querySelectorAll('.hidden-tasks').forEach(el => el.style.display = 'flex');
+                    btn.style.display = 'none';
+                };
+                container.appendChild(btn);
+            }
+        }
+
+        function toggleLoading(show) {
+            document.getElementById('loading').style.display = show ? 'flex' : 'none';
+        }
+    </script>
+</body>
+</html>
