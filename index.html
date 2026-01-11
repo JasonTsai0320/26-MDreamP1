@@ -3,20 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Dream Mobile v2.0</title>
+    <title>Dream Mobile v2.1</title>
     <style>
-        /* 1. 強制改變顏色，用來確認有沒有更新成功 */
-        :root { --primary: #007AFF; --bg: #E3F2FD; } /* 淡藍色背景 */
+        :root { --primary: #007AFF; --bg: #E3F2FD; }
         body { margin: 0; background: var(--bg); font-family: -apple-system, sans-serif; }
-        
-        .header-bar { background: var(--primary); color: white; padding: 40px 20px 20px; text-align: left; border-radius: 0 0 30px 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .header-bar { background: var(--primary); color: white; padding: 40px 20px 20px; text-align: left; border-radius: 0 0 30px 30px; }
         .version-tag { background: #FF3B30; color: white; padding: 2px 8px; border-radius: 5px; font-size: 10px; float: right; }
-        
         .view { display: none; padding: 20px; }
         .view.active { display: block !important; }
-
-        /* 任務卡片樣式 */
-        .task-card { background: white; margin-bottom: 15px; padding: 18px; border-radius: 20px; display: flex; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .task-card { background: white; margin-bottom: 15px; padding: 18px; border-radius: 20px; display: flex; align-items: center; }
         .circle { width: 22px; height: 22px; border: 2px solid #ddd; border-radius: 50%; margin-right: 15px; }
         .circle.done { background: var(--primary); border-color: var(--primary); }
     </style>
@@ -24,63 +19,82 @@
 <body>
 
     <div id="login-view" class="view active" style="text-align:center; background:white; height:100vh; padding-top:100px;">
-        <span class="version-tag">版本：正式 v2.0</span>
+        <span class="version-tag">診斷版 v2.1</span>
         <h2 style="color:var(--primary)">夢想機 啟動</h2>
         <input type="password" id="pin-input" style="width:150px; padding:15px; font-size:24px; text-align:center; border:2px solid #eee; border-radius:15px; margin:20px 0;" placeholder="••••" maxlength="4">
         <br>
-        <button onclick="startApp()" style="background:var(--primary); color:white; border:none; padding:15px 50px; border-radius:15px; font-weight:bold;">驗證進入</button>
+        <button id="verify-btn" onclick="startApp()" style="background:var(--primary); color:white; border:none; padding:15px 50px; border-radius:15px; font-weight:bold;">驗證進入</button>
     </div>
 
     <div id="home-view" class="view">
         <div class="header-bar">
-            <span class="version-tag">版本：正式 v2.0</span>
-            <div id="name-txt" style="font-size:24px; font-weight:bold;">您好！ JP</div>
-            <div style="margin-top:10px; font-size:14px; opacity:0.8;">今日剩餘挑戰</div>
-            <div id="days-txt" style="font-size:48px; font-weight:bold; margin-top:5px;">76 <span style="font-size:16px;">天</span></div>
+            <span class="version-tag">診斷版 v2.1</span>
+            <div id="name-txt" style="font-size:24px; font-weight:bold;">載入中...</div>
+            <div id="days-txt" style="font-size:48px; font-weight:bold; margin-top:5px;">-- 天</div>
         </div>
-
-        <h4 style="margin:25px 0 15px; color:#666;">今日任務清單</h4>
-        <div id="task-container">
-            </div>
+        <div id="task-container" style="margin-top:20px;"></div>
     </div>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const SHEET_ID = urlParams.get('id');
         const API_URL = "https://script.google.com/macros/s/AKfycbwEA2bbL94YtNbunJj_Dej5UidtvExIKm28tctKsdEOUIuIdfBpNkHGCr0WXQLQzBVYew/exec";
-        let SAVED_PIN = localStorage.getItem("dm_pin");
+        
+        // 頁面載入時檢查有沒有 ID
+        window.onload = () => {
+            if (!SHEET_ID) {
+                alert("❌ 錯誤：網址中缺少 id 參數！\n請從試算表點擊按鈕開啟，或確認網址有 ?id=... ");
+            } else {
+                console.log("系統就緒，ID:", SHEET_ID);
+                const savedPin = localStorage.getItem("dm_pin");
+                if (savedPin) startApp(savedPin);
+            }
+        };
 
-        window.onload = () => { if (SAVED_PIN) startApp(); };
+        async function startApp(autoPin = null) {
+            const btn = document.getElementById('verify-btn');
+            const pin = autoPin || document.getElementById('pin-input').value;
 
-        async function startApp() {
-            const input = document.getElementById('pin-input');
-            const pin = SAVED_PIN || (input ? input.value : null);
-            if (!pin) return;
+            if (!pin) return alert("請輸入 4 位數驗證碼");
+            if (!SHEET_ID) return alert("網址 ID 遺失，無法連線試算表");
+
+            // 改變按鈕狀態，讓使用者知道「有在動」
+            if (btn) {
+                btn.innerText = "驗證中...";
+                btn.style.opacity = "0.5";
+                btn.disabled = true;
+            }
 
             try {
-                // 1. 抓取基本資料
                 const res = await fetch(`${API_URL}?action=getSummary&id=${SHEET_ID}&pin=${pin}`);
                 const json = await res.json();
 
                 if (json.status === "success") {
                     localStorage.setItem("dm_pin", pin);
                     
-                    // 填入資料
                     document.getElementById('name-txt').innerText = "您好！ " + json.data.nickname;
-                    document.getElementById('days-txt').innerHTML = json.data.remainingDays + ' <span style="font-size:16px;">天</span>';
+                    document.getElementById('days-txt').innerText = json.data.remainingDays + " 天";
 
-                    // 畫面切換
                     document.getElementById('login-view').style.display = 'none';
                     document.getElementById('home-view').classList.add('active');
 
-                    // 2. 抓取任務
                     fetchTasks(pin);
                 } else {
-                    alert("驗證失敗，請檢查密碼");
-                    localStorage.removeItem("dm_pin");
-                    location.reload();
+                    alert("驗證失敗：" + (json.message || "密碼錯誤"));
+                    resetBtn(btn);
                 }
-            } catch (e) { alert("連線不穩定，請重新整理"); }
+            } catch (e) {
+                alert("連線發生錯誤：\n" + e.message);
+                resetBtn(btn);
+            }
+        }
+
+        function resetBtn(btn) {
+            if (btn) {
+                btn.innerText = "驗證進入";
+                btn.style.opacity = "1";
+                btn.disabled = false;
+            }
         }
 
         async function fetchTasks(pin) {
@@ -90,7 +104,7 @@
                 const container = document.getElementById('task-container');
                 if (!container || json.status !== "success") return;
 
-                container.innerHTML = "";
+                container.innerHTML = `<h4 style="color:#666;">今日任務</h4>`;
                 json.data.forEach((t) => {
                     const card = document.createElement('div');
                     card.className = "task-card";
