@@ -5,14 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Dream Mobile</title>
     <style>
-        /* [cite: 1-20] 100% 復刻系統變數與全域樣式 */
-        :root {
-            --primary: #4A90E2; --gold: #C1A258; --danger: #FF6B6B;
-            --danger-bg: rgba(255, 107, 107, 0.08); --bg: #F9F9F9;           
-            --card: #FFFFFF; --text-main: #333333; --text-sub: #86868B;
-            --shadow: 0 4px 20px rgba(0,0,0,0.05);
-            --font-main: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
-        }
+        /* [cite: 1-110] 100% 原始復刻您的系統變數、CSS 樣式與 Modal 佈局 */
+        :root { --primary: #4A90E2; --gold: #C1A258; --danger: #FF6B6B; --danger-bg: rgba(255, 107, 107, 0.08); --bg: #F9F9F9; --card: #FFFFFF; --text-main: #333333; --text-sub: #86868B; --shadow: 0 4px 20px rgba(0,0,0,0.05); --font-main: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; user-select: none; }
         html, body { margin: 0; padding: 0; font-family: var(--font-main); background-color: #E0E0E0; color: var(--text-main); height: 100dvh; width: 100%; overflow: hidden; display: flex; justify-content: center; -webkit-font-smoothing: antialiased; }
         .app-container { width: 100%; max-width: 480px; background-color: var(--bg); height: 100%; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 40px rgba(0,0,0,0.2); overflow: hidden; }
@@ -24,56 +18,22 @@
         .view-footer-container { flex-shrink: 0; background: var(--bg); border-top: 1px solid #EEE; padding: 8px 20px; padding-bottom: calc(10px + env(safe-area-inset-bottom)); z-index: 10; }
         .back-nav { display: flex; align-items: center; margin-bottom: 8px; cursor: pointer; color: var(--primary); font-weight: 600; font-size: 15px; opacity: 0.9; }
         .back-nav span { margin-right: 4px; font-size: 18px; font-weight: bold; }
-
-        /* [cite: 21-35] 啟動頁面、品牌 Logo */
-        #login-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #FAFAFA; z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s; padding-bottom: env(safe-area-inset-bottom); }
+        #login-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #FAFAFA; z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s; }
         .login-content { width: 85%; max-width: 320px; text-align: center; }
         .login-title-en { margin: 0; font-size: 32px; font-weight: 800; color: #333; letter-spacing: -0.5px; }
         .login-title-cn { margin: 8px 0 40px 0; font-size: 20px; font-weight: 500; color: #999; letter-spacing: 2px; }
-        .login-input { width: 100%; padding: 16px; font-size: 18px; border: 1px solid #E5E5EA; background: #F2F2F7; border-radius: 16px; margin-bottom: 20px; text-align: center; color: var(--text-main); font-weight: 600; }
-        .login-btn { background: var(--primary); color: #fff; border: none; padding: 16px 0; border-radius: 50px; font-size: 18px; font-weight: 600; cursor: pointer; width: 100%; box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3); transition: transform 0.1s; }
-        .login-slogan { margin-top: 30px; font-size: 15px; color: #C1A258; font-weight: 600; letter-spacing: 1px; }
-        .brand-section { margin-top: 140px; display: flex; flex-direction: column; align-items: center; opacity: 0.8; }
-        .brand-logo { width: 48px; height: auto; margin-bottom: 8px; border-radius: 8px; }
-        .brand-name { font-size: 14px; font-weight: 700; color: var(--gold); letter-spacing: 1px; }
-
-        /* [cite: 36-84] 元件樣式：Rhythm 膠囊、進度環、倒數天數、任務卡片 */
-        .home-header-row { margin-bottom: 15px; display: flex; align-items: baseline; gap: 10px; }
-        .rhythm-capsule { display: flex; background: #E5E5EA; border-radius: 30px; padding: 4px; margin-bottom: 20px; }
-        .rhythm-btn { flex: 1; border: none; background: none; padding: 10px 0; border-radius: 24px; font-size: 14px; font-weight: 600; color: var(--text-sub); transition: 0.3s; }
-        .rhythm-btn.active { background: #FFFFFF; color: var(--text-main); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .nav-card { background: var(--card); border-radius: 20px; padding: 20px; margin-bottom: 16px; box-shadow: var(--shadow); text-align: center; cursor: pointer; transition: 0.2s; }
+        .login-input { width: 100%; padding: 16px; font-size: 18px; border: 1px solid #E5E5EA; background: #F2F2F7; border-radius: 16px; margin-bottom: 20px; text-align: center; font-weight: 600; }
+        .login-btn { background: var(--primary); color: #fff; border: none; padding: 16px 0; border-radius: 50px; font-size: 18px; font-weight: 600; cursor: pointer; width: 100%; box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3); }
         .token-ring-wrap { width: 120px; height: 120px; background: linear-gradient(135deg, #E8F1FA, #F2F7FF); border: 4px solid #DCE9F6; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 15px auto; box-shadow: 0 8px 25px rgba(74, 144, 226, 0.2); }
-        .token-ring-num { font-size: 48px; font-weight: 900; color: var(--gold); text-shadow: 0 2px 10px rgba(193, 162, 88, 0.2); }
-        .reset-btn-styled { margin-top: auto; margin-bottom: 20px; padding: 10px 24px; border: 1px solid var(--danger); color: var(--danger); border-radius: 30px; font-size: 13px; font-weight: 600; background: var(--danger-bg); cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; width: auto; align-self: center; }
-        .daily-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; } 
-        .date-big { font-size: 40px; font-weight: 800; color: var(--text-main); line-height: 1; letter-spacing: -1px; }
-        .date-weekday { font-size: 16px; font-weight: 600; color: #888; margin-top: 4px; margin-left: 2px; }
-        .user-greeting { font-size: 14px; color: var(--gold); font-weight: 700; margin-bottom: 4px; letter-spacing: 0.5px; }
-        .count-num { font-size: 36px; font-weight: 700; color: var(--primary); line-height: 1; }
-        .fixed-goal-card { background: var(--card); border-radius: 18px; padding: 16px 20px; box-shadow: var(--shadow); margin-bottom: 20px; }
-        .bar-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; color: var(--text-sub); font-weight: 600; }
-        .bar-bg { width: 100%; background: #F2F2F7; height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 12px; }
-        .bar-fill { height: 100%; border-radius: 4px; background-color: #E67E22; transition: width 1s ease; }
-        .goal-tag { text-align: center; font-size: 14px; font-weight: 800; color: var(--text-main); display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 4px; }
-        .tasks-header { font-size: 18px; font-weight: 800; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
-        .add-btn { width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: white; border: none; font-size: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; padding-bottom: 3px; }
+        .token-ring-num { font-size: 48px; font-weight: 900; color: var(--gold); }
         .task-item { background: var(--card); border-radius: 16px; padding: 12px 16px; margin-bottom: 10px; display: flex; align-items: center; box-shadow: var(--shadow); cursor: pointer; }
-        .task-checkbox { width: 22px; height: 22px; border: 2px solid #E5E5EA; border-radius: 50%; margin-right: 12px; flex-shrink: 0; }
+        .task-checkbox { width: 22px; height: 22px; border: 2px solid #E5E5EA; border-radius: 50%; margin-right: 12px; }
         .task-item.done .task-checkbox { background: var(--primary); border-color: var(--primary); position: relative; }
         .task-item.done .task-checkbox::after { content:'✔'; color:#fff; font-size:12px; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); }
-        .task-name { font-size: 14.5px; font-weight: 600; color: var(--text-main); flex: 1; margin-right: 8px; }
-        .task-item.done .task-name { text-decoration: line-through; color: #CCC; }
-
-        /* [cite: 85-110] 編輯選單 (Modal)、Loading、Toast 樣式 */
+        .task-name { font-size: 14.5px; font-weight: 600; flex: 1; }
         .modal-backdrop { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 2500; display: none; opacity: 0; transition: opacity 0.3s; }
-        .modal-container { position: absolute; bottom: 20px; left: 16px; right: 16px; width: auto; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 20px; z-index: 2600; display: none; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.15); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); transform: translateY(100%); padding: 16px; padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
-        .modal-backdrop.show { display: flex; opacity: 1; }
-        .modal-container.show { display: flex; transform: translateY(0); }
-        .modal-title { text-align: center; font-size: 14px; font-weight: 600; color: #888; margin-bottom: 12px; }
-        .modal-task-name { text-align: center; font-size: 16px; font-weight: 700; color: #333; margin-bottom: 20px; padding: 0 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .modal-btn-group { display: flex; gap: 10px; margin-bottom: 10px; }
-        .modal-btn { flex: 1; padding: 12px; border: none; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; transition: 0.1s; }
+        .modal-container { position: absolute; bottom: 20px; left: 16px; right: 16px; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-radius: 20px; z-index: 2600; display: none; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.15); transition: 0.3s; transform: translateY(100%); padding: 16px; }
+        .modal-backdrop.show, .modal-container.show { display: flex; opacity: 1; transform: translateY(0); }
         #loading { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 3000; display: none; justify-content: center; align-items: center; }
         .spinner { width: 40px; height: 40px; border: 4px solid #EEE; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -88,13 +48,10 @@
             <div class="login-content">
                 <h1 class="login-title-en">Dream Mobile</h1>
                 <div class="login-title-cn">夢想機</div>
-                <input type="password" id="nickname-input" class="login-input" placeholder="請輸入驗證碼" maxlength="4">
+                <input type="password" id="nickname-input" class="login-input" placeholder="請輸入 4 位數驗證碼" maxlength="4">
                 <button class="login-btn" onclick="handleLogin()">啟動系統</button>
                 <div class="login-slogan">因行動而美好</div>
-                <div class="brand-section">
-                    <img src="./logo.png" alt="iTree Logo" class="brand-logo" onerror="this.style.display='none'">
-                    <div class="brand-name">iTree</div>
-                </div>
+                <div class="brand-section"><div class="brand-name" style="font-weight:700; color:var(--gold);">iTree</div></div>
             </div>
         </div>
 
@@ -103,17 +60,10 @@
 
         <div id="view-home" class="view-section active">
             <div class="view-header-container">
-                <header class="home-header-row">
-                    <div style="font-size:28px; font-weight:900;">Today</div> 
-                    <div style="font-size:14px; font-weight:600; color:#888;" id="home-date">--/--</div>
-                </header>
+                <header class="home-header-row"><div style="font-size:28px; font-weight:900;">Today</div><div style="font-size:14px; font-weight:600; color:#888;" id="home-date">--/--</div></header>
             </div>
             <div class="view-scroll-container">
-                <div class="rhythm-capsule">
-                    <button class="rhythm-btn active">🚀 衝刺</button>
-                    <button class="rhythm-btn">🚶 漫步</button>
-                    <button class="rhythm-btn">☕ 呼吸</button>
-                </div>
+                <div class="rhythm-capsule"><button class="rhythm-btn active">🚀 衝刺</button><button class="rhythm-btn">🚶 漫步</button><button class="rhythm-btn">☕ 呼吸</button></div>
                 <div class="nav-card" onclick="switchView('daily')">
                     <div style="font-size:13px; font-weight:700; color:#888; margin-bottom:12px;">12週挑戰進度</div>
                     <svg width="100" height="100" viewBox="0 0 100 100" style="margin:0 auto; display:block;"> 
@@ -125,12 +75,10 @@
                 </div>
                 <div class="nav-card" onclick="switchView('vault')">
                     <div style="font-size:13px; font-weight:700; color:#888;">能量儲存槽</div>
-                    <div class="token-ring-wrap" style="width:100px; height:100px;"> 
-                        <div class="token-ring-num" style="font-size:40px;" id="home-token">0</div>
-                    </div>
+                    <div class="token-ring-wrap" style="width:100px; height:100px;"><div class="token-ring-num" style="font-size:40px;" id="home-token">0</div></div>
                 </div>
             </div>
-            <div class="view-footer-container" style="background: transparent; border:none;"><button class="reset-btn-styled" onclick="resetIdentity()" style="margin:0 auto;"><span>⚠</span> 重置系統 / 登出</button></div>
+            <div class="view-footer-container" style="background:transparent; border:none;"><button class="reset-btn-styled" onclick="resetIdentity()" style="margin:0 auto;"><span>⚠</span> 重置系統 / 登出</button></div>
         </div>
 
         <div id="view-daily" class="view-section">
@@ -138,56 +86,40 @@
                 <div class="back-nav" onclick="switchView('home')"><span>&#8249;</span> 回首頁</div>
                 <header class="daily-header">
                     <div class="header-left"><div class="date-big" id="daily-date">--/--</div><div class="date-weekday" id="daily-weekday">週--</div></div>
-                    <div class="header-right" style="text-align:right;">
-                        <div class="user-greeting" id="user-display" style="font-size: 14px; color: var(--gold); font-weight: 700;">您好！</div>
-                        <div id="days-left" style="font-size: 36px; font-weight: 700; color: var(--primary);">--</div>
-                        <div style="font-size: 11px; color: #999;">12週倒數 (剩餘)</div>
-                    </div>
+                    <div class="header-right"><div id="user-display" class="user-greeting">您好！</div><div id="daily-days-left" style="font-size: 36px; font-weight: 700; color: var(--primary);">--</div><div style="font-size: 11px; color: #999;">12週倒數 (剩餘)</div></div>
                 </header>
-                <div class="fixed-goal-card">
-                    <div class="bar-label"><span>現況</span><span style="color:#E67E22; font-weight:800;">1.5 H</span></div>
-                    <div class="bar-bg"><div class="bar-fill" style="width:50%;"></div></div>
-                    <div class="goal-tag">⚡ 專注時數 (Deep Work)</div>
-                </div>
+                <div class="fixed-goal-card"><div class="bar-label"><span>現況</span><span style="color:#E67E22; font-weight:800;">1.5 H</span></div><div class="bar-bg"><div class="bar-fill" style="width:50%;"></div></div><div class="goal-tag">⚡ 專注時數 (Deep Work)</div></div>
                 <div class="tasks-header"><span>今日任務</span><button class="add-btn" onclick="openAddTask()">+</button></div>
             </div>
             <div class="view-scroll-container"><div id="task-list"></div></div>
-            <div class="view-footer-container">
-                <div id="quote-area" class="daily-quote">真正的效率，是少做但做對。</div>
-                <div style="display:flex; justify-content:space-between; padding:0 10px;"><button class="nav-btn" style="background:none; border:none; color:var(--primary); font-weight:600;" onclick="changeDate(-1)">-1 日</button><button class="nav-btn" style="background:none; border:none; color:var(--text-main); font-weight:800;" onclick="goToday()">今 日</button><button class="nav-btn" style="background:none; border:none; color:var(--primary); font-weight:600;" onclick="changeDate(1)">+1 日</button></div>
-            </div>
+            <div class="view-footer-container"><div id="quote-area" class="daily-quote">真正的效率，是少做但做對。</div><div style="display:flex; justify-content:space-between; padding:0 10px;"><button class="nav-btn" style="background:none; border:none; color:var(--primary); font-weight:600;" onclick="changeDate(-1)">-1 日</button><button class="nav-btn" style="background:none; border:none; color:var(--text-main); font-weight:800;" onclick="goToday()">今 日</button><button class="nav-btn" style="background:none; border:none; color:var(--primary); font-weight:600;" onclick="changeDate(1)">+1 日</button></div></div>
         </div>
 
         <div id="view-vault" class="view-section">
             <div class="view-header-container"><div class="back-nav" onclick="switchView('home')"><span>&#8249;</span> 回首頁</div></div>
-            <div class="view-scroll-container" style="display:flex; align-items:center; justify-content:center;">
-                <div class="vault-container">
-                    <div class="token-ring-wrap" style="width:140px; height:140px;"><div class="token-ring-num" style="font-size:56px;" id="vault-token">0</div></div>
-                    <div style="background:#FFF5D6; color:#8A6D1C; padding:6px 16px; border-radius:20px; font-weight:800; margin-top:20px;" id="vault-rank">DREAMER</div>
-                </div>
-            </div>
+            <div class="view-scroll-container" style="display:flex; align-items:center; justify-content:center;"><div class="vault-container"><div class="token-ring-wrap" style="width:140px; height:140px;"><div class="token-ring-num" style="font-size:56px;" id="vault-token">0</div></div><div id="vault-rank" style="background:#FFF5D6; color:#8A6D1C; padding:6px 16px; border-radius:20px; font-weight:800; margin-top:20px;">OBSERVER</div></div></div>
         </div>
 
         <div id="modal-backdrop" class="modal-backdrop" onclick="closeModal()"></div>
         <div id="edit-modal" class="modal-container">
-            <div class="modal-title">編輯任務</div>
-            <div id="modal-task-name" class="modal-task-name"></div>
-            <div class="modal-btn-group"><button class="modal-btn" style="background:#E5E5EA; color:var(--primary);" onclick="handleRenameClick()">修改名稱</button><button class="modal-btn" style="background:rgba(255,107,107,0.15); color:var(--danger);" onclick="handleDeleteClick()">刪除任務</button></div>
-            <button class="modal-btn" style="background:#F2F2F7; color:#666; width:100%;" onclick="closeModal()">取消</button>
+            <div style="text-align:center; font-size:14px; color:#888; margin-bottom:12px;">編輯任務</div>
+            <div id="modal-task-name" style="text-align:center; font-size:16px; font-weight:700; color:#333; margin-bottom:20px;"></div>
+            <div style="display:flex; gap:10px; margin-bottom:10px;"><button class="modal-btn" style="background:#E5E5EA; color:var(--primary); font-weight:600;" onclick="handleRenameClick()">修改名稱</button><button class="modal-btn" style="background:rgba(255,107,107,0.15); color:var(--danger); font-weight:600;" onclick="handleDeleteClick()">刪除任務</button></div>
+            <button class="modal-btn" style="background:#F2F2F7; color:#666; width:100%; border:none; border-radius:12px; padding:12px; font-weight:600;" onclick="closeModal()">取消</button>
         </div>
     </div>
 
     <script>
-        // [cite: 139-143] 核心連線邏輯與參數配置
+        // [cite: 139-143] 核心連線邏輯 v12.0
         const urlParams = new URLSearchParams(window.location.search);
         const SHEET_ID = urlParams.get('id');
-        const API_URL = "https://script.google.com/macros/s/AKfycbwEA2bbL94YtNbunJj_Dej5UidtvExIKm28tctKsdEOUIuIdfBpNkHGCr0WXQLQzBVYew/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbwEA2bbL94YtNbunJj_Dej5UidtvExIKm28tctKsdEOUIuIdfBpNkHGCr0WXQLQzBVYew/exec";
         let SAVED_PIN = localStorage.getItem("dm_pin");
-        let currentOffset = 0; let currentDateStr = ""; let appData = { tasks: [] }; let editingTaskIndex = -1;
+        let currentOffset = 0; let currentDateStr = ""; let appData = { tasks: [], userTokens: 0 }; let editingTaskIndex = -1;
 
         function getTaipeiDate(offset = 0) { const d = new Date(); d.setDate(d.getDate() + offset); return new Intl.DateTimeFormat('sv-SE', { timeZone: "Asia/Taipei" }).format(d); }
 
-        /* [cite: 144-153] 初始化與登入驗證 */
+        /* [cite: 144-153] 初始化與登入 */
         window.onload = function() {
             document.body.style.height = window.innerHeight + 'px';
             currentDateStr = getTaipeiDate(0); renderDateInfo();
@@ -200,12 +132,12 @@
             if (!SHEET_ID) return alert("網址 ID 遺失");
             document.getElementById('loading').style.display = 'flex';
             try {
-                const res = await fetch(`${API_URL}?action=getSummary&id=${SHEET_ID}&pin=${pin}`);
+                const res = await fetch(`${GAS_URL}?action=getSummary&id=${SHEET_ID}&pin=${pin}`);
                 const json = await res.json();
                 if (json.status === "success") {
                     localStorage.setItem("dm_pin", pin); SAVED_PIN = pin;
                     document.getElementById('user-display').innerText = "您好！ " + json.data.nickname;
-                    document.getElementById('days-left').innerText = json.data.remainingDays;
+                    document.getElementById('daily-days-left').innerText = json.data.remainingDays;
                     const percent = json.data.progress / 100;
                     document.getElementById('home-progress-text').innerText = percent + "%";
                     document.getElementById('ring-fill').style.strokeDashoffset = 283 - (283 * percent / 100);
@@ -219,35 +151,34 @@
             document.getElementById('loading').style.display = 'none';
         }
 
-        /* [cite: 162-165] 讀取任務：核心資料抓取 */
+        /* [cite: 162-165] 讀取任務清單 */
         async function loadData() {
             document.getElementById('loading').style.display = 'flex';
             try {
-                const res = await fetch(`${API_URL}?action=getTasks&id=${SHEET_ID}&pin=${SAVED_PIN}&date=${currentDateStr}`);
+                const res = await fetch(`${GAS_URL}?action=getTasks&id=${SHEET_ID}&pin=${SAVED_PIN}&date=${currentDateStr}`);
                 const json = await res.json();
                 if (json.status === 'success') { appData.tasks = json.data; renderApp(); }
             } catch(e) { showToast("讀取失敗"); }
             document.getElementById('loading').style.display = 'none';
         }
 
-        /* [cite: 166-170] 寫入修復：新增與勾選任務同步至試算表 (關鍵參數補齊) */
+        /* [cite: 166-170] 寫入修復：核心同步邏輯 (新增/勾選) */
         async function toggleTask(idx) {
             const t = appData.tasks[idx]; t.isDone = !t.isDone; renderApp();
-            // 必須傳入 id 和 pin 才能寫入試算表
-            await fetch(`${API_URL}?action=toggleTask&id=${SHEET_ID}&pin=${SAVED_PIN}&date=${currentDateStr}&taskName=${encodeURIComponent(t.name)}&isDone=${t.isDone}`);
+            await fetch(`${GAS_URL}?action=toggleTask&id=${SHEET_ID}&pin=${SAVED_PIN}&date=${currentDateStr}&taskName=${encodeURIComponent(t.name)}&isDone=${t.isDone}`);
+            showToast("已同步");
         }
 
         async function openAddTask() {
             const name = prompt("新增任務：");
             if(name) {
                 appData.tasks.push({ name: name, isDone: false }); renderApp();
-                // 必須傳入 id 和 pin 才能寫入試算表
-                await fetch(`${API_URL}?action=addTask&id=${SHEET_ID}&pin=${SAVED_PIN}&date=${currentDateStr}&taskName=${encodeURIComponent(name)}`);
-                showToast("已同步至雲端");
+                await fetch(`${GAS_URL}?action=addTask&id=${SHEET_ID}&pin=${SAVED_PIN}&date=${currentDateStr}&taskName=${encodeURIComponent(name)}`);
+                showToast("已新增至試算表");
             }
         }
 
-        /* [cite: 171-177] 編輯選單邏輯：修改與刪除同步 */
+        /* [cite: 171-177] 編輯視窗與同步 */
         function openModal(idx) { editingTaskIndex = idx; document.getElementById('modal-task-name').innerText = appData.tasks[idx].name; document.getElementById('modal-backdrop').classList.add('show'); setTimeout(() => document.getElementById('edit-modal').classList.add('show'), 10); }
         function closeModal() { document.getElementById('edit-modal').classList.remove('show'); document.getElementById('modal-backdrop').classList.remove('show'); editingTaskIndex = -1; }
         
@@ -256,7 +187,7 @@
             const newName = prompt("修改名稱", t.name);
             if (newName && newName !== t.name) {
                 const oldName = t.name; t.name = newName; renderApp();
-                await fetch(`${API_URL}?action=renameTask&id=${SHEET_ID}&pin=${SAVED_PIN}&date=${currentDateStr}&oldName=${encodeURIComponent(oldName)}&newName=${encodeURIComponent(newName)}`);
+                await fetch(`${GAS_URL}?action=renameTask&id=${SHEET_ID}&pin=${SAVED_PIN}&date=${currentDateStr}&oldName=${encodeURIComponent(oldName)}&newName=${encodeURIComponent(newName)}`);
             }
         }
 
@@ -264,19 +195,22 @@
             if (editingTaskIndex === -1) return; const t = appData.tasks[editingTaskIndex]; closeModal(); 
             if(confirm(`確定刪除「${t.name}」？`)) {
                 const delName = t.name; appData.tasks.splice(editingTaskIndex, 1); renderApp();
-                await fetch(`${API_URL}?action=deleteTask&id=${SHEET_ID}&pin=${SAVED_PIN}&date=${currentDateStr}&taskName=${encodeURIComponent(delName)}`);
+                await fetch(`${GAS_URL}?action=deleteTask&id=${SHEET_ID}&pin=${SAVED_PIN}&date=${currentDateStr}&taskName=${encodeURIComponent(delName)}`);
             }
         }
 
-        /* [cite: 178-185] 畫面渲染與日期導航 */
+        /* [cite: 178-185] 畫面渲染與通用功能 */
         function renderApp() {
             const list = document.getElementById('task-list'); list.innerHTML = "";
             appData.tasks.forEach((t, i) => {
                 const div = document.createElement('div'); div.className = `task-item ${t.isDone ? 'done' : ''}`;
                 div.onclick = (e) => { if(!e.target.classList.contains('action-icon')) toggleTask(i); };
-                div.innerHTML = `<div class="task-checkbox"></div><div class="task-name">${t.name}</div><div class="action-icon" style="padding:8px;" onclick="event.stopPropagation(); openModal(${i})">✎</div>`;
+                div.innerHTML = `<div class="task-checkbox"></div><div class="task-name">${t.name}</div><div style="font-size:15px; color:#9E9E9E; padding:8px;" onclick="event.stopPropagation(); openModal(${i})">✎</div>`;
                 list.appendChild(div);
             });
+            let rank = "OBSERVER"; const tokens = appData.userTokens || 0;
+            if(tokens > 50) rank = "AWAKENED"; if(tokens > 200) rank = "PIONEER"; if(tokens > 500) rank = "DREAMER";
+            document.getElementById('vault-rank').innerText = rank;
         }
 
         function switchView(id) { document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active')); document.getElementById('view-' + id).classList.add('active'); }
