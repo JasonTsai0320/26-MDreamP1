@@ -8,25 +8,22 @@
         :root { --primary: #4A90E2; --bg: #F2F5F9; }
         body { margin: 0; background: var(--bg); font-family: -apple-system, sans-serif; color: #333; }
         
-        /* 頁面切換控制 */
         .view { display: none; opacity: 0; transition: 0.4s; }
         .view.active { display: block; opacity: 1; }
 
-        /* 登入介面視覺 */
+        /* 登入介面 */
         #login-screen { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; background: white; }
         .pin-dot-input { width: 200px; padding: 15px; font-size: 24px; text-align: center; border: 2px solid #eee; border-radius: 15px; margin-bottom: 20px; outline: none; }
         .btn-blue { background: var(--primary); color: white; border: none; padding: 15px 60px; border-radius: 12px; font-weight: bold; cursor: pointer; }
 
-        /* 主介面標頭 */
+        /* 主介面視覺 */
         .header { padding: 40px 24px 20px; display: flex; justify-content: space-between; align-items: flex-end; }
         .user-title { font-size: 26px; font-weight: 800; }
         .days-circle { font-size: 38px; font-weight: 800; color: var(--primary); }
         
-        /* 任務卡片樣式 */
         .task-card { background: white; margin: 0 20px 12px; padding: 18px; border-radius: 18px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; align-items: center; }
-        .check-box { width: 24px; height: 24px; border: 2px solid #ddd; border-radius: 50%; margin-right: 15px; }
-        .check-box.done { background: var(--primary); border-color: var(--primary); position: relative; }
-        .check-box.done::after { content: '✓'; color: white; position: absolute; left: 5px; top: 0px; font-size: 16px; }
+        .check-box { width: 22px; height: 22px; border: 2px solid #ddd; border-radius: 50%; margin-right: 15px; }
+        .check-box.done { background: var(--primary); border-color: var(--primary); }
         .task-name { flex: 1; font-weight: 500; }
         .task-name.done { color: #ccc; text-decoration: line-through; }
         
@@ -38,15 +35,14 @@
 
     <div id="login-screen" class="view active">
         <h2 style="color:var(--primary)">夢想機 啟動</h2>
-        <p style="color:#888;">請輸入您的 4 位數驗證碼</p>
-        <input type="password" id="pin-input" class="pin-dot-input" placeholder="••••" maxlength="4" inputmode="numeric">
+        <input type="password" id="pin-input" class="pin-dot-input" placeholder="••••" maxlength="4">
         <button class="btn-blue" onclick="initSystem()">進入系統</button>
     </div>
 
     <div id="view-home" class="view">
         <div class="header">
             <div>
-                <div id="user-display" class="user-title">您好！ JP</div>
+                <div id="user-display" class="user-title">載入中...</div>
                 <div style="color:#888; font-weight:bold; margin-top:5px;">今日進度目標</div>
             </div>
             <div style="text-align:right">
@@ -54,23 +50,19 @@
                 <div style="font-size:12px; color:#888;">剩餘挑戰天數</div>
             </div>
         </div>
-
-        <div id="task-list-container" style="padding-bottom:100px;">
+        <div id="task-list-area" style="padding-bottom:100px;">
             <h4 style="margin:20px; color:#666;">今日任務</h4>
-            <div id="task-list">
-                </div>
+            <div id="task-list"></div>
         </div>
     </div>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const SHEET_ID = urlParams.get('id');
-        // 請確認此處網址為您最新部署的網址
         const API_URL = "https://script.google.com/macros/s/AKfycbwEA2bbL94YtNbunJj_Dej5UidtvExIKm28tctKsdEOUIuIdfBpNkHGCr0WXQLQzBVYew/exec";
         
         let USER_PIN = localStorage.getItem("dm_pin");
 
-        // 自動登入檢查
         window.onload = () => { if (USER_PIN) initSystem(); };
 
         async function initSystem() {
@@ -79,32 +71,31 @@
             if (!USER_PIN) return;
 
             try {
-                // 步驟 1: 先抓取摘要資料進行身份驗證
+                // 1. 抓取基本資料 (摘要)
                 const resSum = await fetch(`${API_URL}?action=getSummary&id=${SHEET_ID}&pin=${USER_PIN}`);
                 const dataSum = await resSum.json();
 
                 if (dataSum.status === "success") {
-                    // 驗證成功，存入快取
                     localStorage.setItem("dm_pin", USER_PIN);
                     
-                    // 更新畫面上方資訊
+                    // 先填入基本數據
                     document.getElementById('user-display').innerText = "您好！ " + dataSum.data.nickname;
                     document.getElementById('days-val').innerText = dataSum.data.remainingDays;
 
-                    // --- 關鍵修正：先讓畫面進入主頁，不要等任務清單 ---
+                    // --- 強制先顯示主畫面，不等任務清單 ---
                     document.getElementById('login-screen').style.display = 'none';
                     document.getElementById('view-home').classList.add('active');
 
-                    // 步驟 2: 背景抓取任務清單 (不影響主畫面開啟)
-                    fetchTasks(); 
+                    // 2. 背景非同步載入任務清單 (即便失敗也不會跳錯誤視窗)
+                    fetchTasks();
                 } else {
-                    alert("驗證失敗：驗證碼不正確");
+                    alert("驗證失敗：請檢查密碼是否正確");
                     localStorage.removeItem("dm_pin");
                     location.reload();
                 }
             } catch (e) { 
-                console.error(e);
-                alert("連線失敗，請檢查 API 部署網址是否正確。"); 
+                // 顯示精確錯誤，不再只顯示連線錯誤
+                alert("診斷回報：\n" + e.name + ": " + e.message); 
             }
         }
 
@@ -112,17 +103,18 @@
             try {
                 const resTask = await fetch(`${API_URL}?action=getTasks&id=${SHEET_ID}&pin=${USER_PIN}`);
                 const dataTask = await resTask.json();
-                if (dataTask.status === "success") {
+                
+                if (dataTask.status === "success" && Array.isArray(dataTask.data)) {
                     renderTasks(dataTask.data);
                 }
             } catch (e) {
-                console.warn("任務清單載入失敗，但不影響主頁運作");
+                console.warn("任務載入失敗，但不影響主畫面顯示");
             }
         }
 
         function renderTasks(tasks) {
             const list = document.getElementById('task-list');
-            if (!list || !tasks) return;
+            if (!list) return;
             list.innerHTML = "";
             
             tasks.forEach((t, i) => {
@@ -130,12 +122,11 @@
                 card.className = `task-card ${i >= 3 ? 'task-hidden' : ''}`;
                 card.innerHTML = `
                     <div class="check-box ${t.isDone ? 'done' : ''}"></div>
-                    <div class="task-name ${t.isDone ? 'done' : ''}">${t.name}</div>
+                    <div class="task-name ${t.isDone ? 'done' : ''}" style="flex:1">${t.name}</div>
                 `;
                 list.appendChild(card);
             });
 
-            // 3+N 邏輯：超過三個顯示展開按鈕
             if (tasks.length > 3) {
                 const more = document.createElement('div');
                 more.className = 'more-btn';
