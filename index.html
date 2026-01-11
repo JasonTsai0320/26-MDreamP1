@@ -1,87 +1,124 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>夢想機 偵錯模式</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Dream Mobile</title>
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 20px; background: #f4f7f9; }
-        .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 320px; margin: auto; }
-        input { width: 80%; padding: 15px; font-size: 20px; text-align: center; margin: 20px 0; border: 1px solid #ddd; border-radius: 12px; }
-        button { width: 90%; padding: 15px; background: #4A90E2; color: white; border: none; border-radius: 12px; font-size: 18px; cursor: pointer; }
-        #view-dashboard { display: none; } /* 初始隱藏 */
+        :root { --primary: #4A90E2; --bg: #F2F5F9; }
+        body { margin: 0; background: var(--bg); font-family: -apple-system, sans-serif; color: #333; }
+        
+        /* 頁面切換 */
+        .view { display: none; opacity: 0; transition: 0.4s; }
+        .view.active { display: block; opacity: 1; }
+
+        /* 登入介面 */
+        #login-screen { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; background: white; }
+        .pin-dot-input { width: 200px; padding: 15px; font-size: 24px; text-align: center; border: 2px solid #eee; border-radius: 15px; margin-bottom: 20px; outline: none; }
+        .btn-blue { background: var(--primary); color: white; border: none; padding: 15px 60px; border-radius: 12px; font-weight: bold; cursor: pointer; }
+
+        /* 主介面視覺 */
+        .header { padding: 40px 24px 20px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .user-title { font-size: 26px; font-weight: 800; }
+        .days-circle { font-size: 38px; font-weight: 800; color: var(--primary); }
+        
+        .task-card { background: white; margin: 0 20px 12px; padding: 18px; border-radius: 18px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; align-items: center; }
+        .check-box { width: 24px; height: 24px; border: 2px solid #ddd; border-radius: 50%; margin-right: 15px; }
+        .check-box.done { background: var(--primary); border-color: var(--primary); }
+        .task-name { flex: 1; font-weight: 500; }
+        .task-name.done { color: #ccc; text-decoration: line-through; }
+        
+        .task-hidden { display: none !important; }
+        .more-btn { text-align: center; color: var(--primary); font-weight: bold; padding: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div id="view-login" class="card">
-        <h2 style="color:#4A90E2">系統身分驗證</h2>
-        <p>請輸入 4 位數驗證碼</p>
-        <input type="password" id="pin-input" placeholder="預設 1234" maxlength="4">
-        <button onclick="runSystem()">進入系統</button>
+    <div id="login-screen" class="view active">
+        <h2 style="color:var(--primary)">夢想機 啟動</h2>
+        <input type="password" id="pin-input" class="pin-dot-input" placeholder="••••" maxlength="4">
+        <button class="btn-blue" onclick="initSystem()">進入系統</button>
     </div>
 
-    <div id="view-dashboard" class="card">
-        <h2 id="name-box">讀取中...</h2>
-        <div style="font-size: 40px; font-weight: bold; color: #4A90E2; margin: 20px 0;">
-            <span id="days-box">--</span> 天
+    <div id="view-home" class="view">
+        <div class="header">
+            <div>
+                <div id="user-display" class="user-title">您好！ JP</div>
+                <div style="color:#888; font-weight:bold; margin-top:5px;">今日進度目標</div>
+            </div>
+            <div style="text-align:right">
+                <div id="days-val" class="days-circle">76</div>
+                <div style="font-size:12px; color:#888;">剩餘挑戰天數</div>
+            </div>
         </div>
-        <p>剩餘挑戰天數</p>
-        <button onclick="localStorage.removeItem('dm_pin'); location.reload();" style="background:#8e8e93; margin-top:20px;">登出系統</button>
+
+        <div id="task-list-container" style="padding-bottom:100px;">
+            <h4 style="margin:20px; color:#666;">今日任務</h4>
+            <div id="task-list"></div>
+        </div>
     </div>
 
     <script>
-        // 1. 初始化檢查
         const urlParams = new URLSearchParams(window.location.search);
         const SHEET_ID = urlParams.get('id');
         const API_URL = "https://script.google.com/macros/s/AKfycbwEA2bbL94YtNbunJj_Dej5UidtvExIKm28tctKsdEOUIuIdfBpNkHGCr0WXQLQzBVYew/exec";
         
         let USER_PIN = localStorage.getItem("dm_pin");
 
-        // 如果之前登入過，自動執行
-        window.onload = () => {
-            console.log("系統已啟動，目標 ID:", SHEET_ID);
-            if (USER_PIN) runSystem();
-        };
+        window.onload = () => { if (USER_PIN) initSystem(); };
 
-        async function runSystem() {
-            const inputEl = document.getElementById('pin-input');
-            if (!USER_PIN && inputEl) USER_PIN = inputEl.value;
-            if (!USER_PIN) return alert("請輸入驗證碼");
-
-            console.log("正在嘗試連線 API...");
+        async function initSystem() {
+            const input = document.getElementById('pin-input');
+            if (!USER_PIN && input) USER_PIN = input.value;
+            if (!USER_PIN) return;
 
             try {
-                const res = await fetch(`${API_URL}?action=getSummary&id=${SHEET_ID}&pin=${USER_PIN}`);
-                const json = await res.json();
+                // 1. 抓取摘要資料
+                const resSum = await fetch(`${API_URL}?action=getSummary&id=${SHEET_ID}&pin=${USER_PIN}`);
+                const dataSum = await resSum.json();
 
-                if (json.status === "success") {
+                if (dataSum.status === "success") {
                     localStorage.setItem("dm_pin", USER_PIN);
-                    
-                    // --- 核心偵錯區：使用安全檢查防止 Null 報錯 ---
-                    const nameTag = document.getElementById('name-box');
-                    const daysTag = document.getElementById('days-box');
+                    document.getElementById('user-display').innerText = "您好！ " + dataSum.data.nickname;
+                    document.getElementById('days-val').innerText = dataSum.data.remainingDays;
 
-                    if (nameTag && daysTag) {
-                        nameTag.innerText = "您好！ " + json.data.nickname;
-                        daysTag.innerText = json.data.remainingDays;
-                    } else {
-                        // 如果在 HTML 裡找不到格子，就用彈窗強制顯示資料
-                        alert("✅ 連線成功但找不到顯示標籤！\n暱稱：" + json.data.nickname + "\n天數：" + json.data.remainingDays);
-                    }
+                    // 2. 抓取任務資料 (3+N 邏輯)
+                    const resTask = await fetch(`${API_URL}?action=getTasks&id=${SHEET_ID}&pin=${USER_PIN}`);
+                    const dataTask = await resTask.json();
+                    renderTasks(dataTask.data);
 
-                    // 畫面切換
-                    const loginDiv = document.getElementById('view-login');
-                    const dashDiv = document.getElementById('view-dashboard');
-                    if (loginDiv) loginDiv.style.display = 'none';
-                    if (dashDiv) dashDiv.style.display = 'block';
-
+                    // 3. 切換畫面
+                    document.getElementById('login-screen').classList.remove('active');
+                    document.getElementById('view-home').classList.add('active');
                 } else {
-                    alert("驗證失敗：" + json.message);
+                    alert("驗證失敗！");
                     localStorage.removeItem("dm_pin");
                 }
-            } catch (e) {
-                alert("❌ 系統錯誤：" + e.message);
+            } catch (e) { alert("連線錯誤"); }
+        }
+
+        function renderTasks(tasks) {
+            const list = document.getElementById('task-list');
+            list.innerHTML = "";
+            tasks.forEach((t, i) => {
+                const card = document.createElement('div');
+                card.className = `task-card ${i >= 3 ? 'task-hidden' : ''}`;
+                card.innerHTML = `
+                    <div class="check-box ${t.isDone ? 'done' : ''}"></div>
+                    <div class="task-name ${t.isDone ? 'done' : ''}">${t.name}</div>
+                `;
+                list.appendChild(card);
+            });
+
+            if (tasks.length > 3) {
+                const more = document.createElement('div');
+                more.className = 'more-btn';
+                more.innerText = `顯示其餘 ${tasks.length - 3} 個任務...`;
+                more.onclick = () => {
+                    document.querySelectorAll('.task-hidden').forEach(el => el.classList.remove('task-hidden'));
+                    more.style.display = 'none';
+                };
+                list.appendChild(more);
             }
         }
     </script>
