@@ -1,170 +1,61 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Dream Mobile</title>
+    <title>夢想機 診斷模式</title>
     <style>
-        /* 核心樣式 */
-        :root { --primary: #4A90E2; --bg: #F9F9F9; }
-        body { margin: 0; background: var(--bg); font-family: -apple-system, sans-serif; }
-        
-        /* 視圖控制：預設隱藏主頁面 */
-        .view { display: none; }
-        .view.active { display: block !important; }
-
-        /* 讀取動畫 */
-        #loading { position: fixed; inset: 0; background: rgba(255,255,255,0.8); display: none; justify-content: center; align-items: center; z-index: 9999; }
-        .spinner { width: 40px; height: 40px; border: 4px solid #eee; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* 登入介面 */
-        #login-screen { position: fixed; inset: 0; background: white; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
-        input#pin-input { width: 100%; max-width: 280px; padding: 15px; border: 2px solid #eee; border-radius: 12px; font-size: 24px; text-align: center; margin: 20px 0; outline: none; }
-        .btn-start { width: 100%; max-width: 280px; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: bold; font-size: 18px; cursor: pointer; }
-
-        /* 主畫面介面 */
-        .header { padding: 40px 24px 20px; display: flex; justify-content: space-between; align-items: flex-end; }
-        .user-display { font-size: 26px; font-weight: bold; color: #333; }
-        .count-num { font-size: 36px; font-weight: 800; color: var(--primary); }
-        .task-container { padding: 0 24px; }
-        .task-item { background: white; border-radius: 15px; padding: 15px; margin-bottom: 10px; display: flex; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .task-checkbox { width: 22px; height: 22px; border: 2px solid #ddd; border-radius: 50%; margin-right: 12px; }
-        .task-hidden { display: none !important; }
+        body { font-family: sans-serif; padding: 20px; text-align: center; }
+        #app-content { display: none; border: 2px solid #4A90E2; padding: 20px; border-radius: 10px; }
+        .data-box { font-size: 24px; color: #4A90E2; font-weight: bold; margin: 10px 0; }
     </style>
 </head>
 <body>
-
-    <div id="loading"><div class="spinner"></div></div>
-
-    <div id="login-screen">
-        <h2 style="color:var(--primary); margin-bottom:10px;">夢想機 啟動</h2>
-        <p style="color:#888;">請輸入 4 位數驗證碼</p>
-        <input type="password" id="pin-input" placeholder="預設 1234" maxlength="4" inputmode="numeric">
-        <button class="btn-start" onclick="handleLogin()">進入系統</button>
+    <h1>🚀 夢想機 連線測試</h1>
+    
+    <div id="login-box">
+        <p>請輸入驗證碼 (目前設定: 1234)</p>
+        <input type="password" id="pin-input" style="font-size:20px; width:100px; text-align:center;">
+        <button onclick="testConnection()" style="font-size:20px;">確認登入</button>
     </div>
 
-    <div id="view-home" class="view">
-        <div class="header">
-            <div>
-                <div id="user-display" class="user-display">您好！ JP</div>
-                <div style="color:#999; font-size:14px; margin-top:5px;">今日進度挑戰中</div>
-            </div>
-            <div style="text-align:right">
-                <div id="days-val" class="count-num">--</div>
-                <div style="font-size:12px; color:#999;">倒數天數</div>
-            </div>
-        </div>
-
-        <div class="task-container">
-            <h4 style="margin: 20px 0 10px; color:#666;">今日任務清單</h4>
-            <div id="task-list">
-                </div>
-        </div>
+    <div id="app-content">
+        <div class="data-box">暱稱：<span id="show-name">--</span></div>
+        <div class="data-box">倒數：<span id="show-days">--</span> 天</div>
+        <p style="color: green;">✅ 連線成功！您的資料已正確由 Google 傳回。</p>
     </div>
 
     <script>
-        // 設定 API 網址
         const urlParams = new URLSearchParams(window.location.search);
         const SHEET_ID = urlParams.get('id');
+        // 這是您測試成功的 API 網址
         const API_URL = "https://script.google.com/macros/s/AKfycbwEA2bbL94YtNbunJj_Dej5UidtvExIKm28tctKsdEOUIuIdfBpNkHGCr0WXQLQzBVYew/exec";
-        
-        let USER_PIN = localStorage.getItem("dm_pin");
 
-        window.onload = () => {
-            console.log("App 啟動中，ID:", SHEET_ID);
-            if (!SHEET_ID) return alert("❌ 網址缺少 ID，請重新從試算表點擊。");
-            // 如果瀏覽器記得密碼，直接自動登入
-            if (USER_PIN) {
-                console.log("偵測到快取密碼，嘗試自動登入...");
-                startSystem();
-            }
-        };
+        async function testConnection() {
+            const pin = document.getElementById('pin-input').value;
+            alert("正在嘗試抓取資料，請稍候...");
 
-        async function handleLogin() {
-            const input = document.getElementById('pin-input');
-            if (!input.value) return alert("請輸入驗證碼");
-            USER_PIN = input.value.trim();
-            await startSystem();
-        }
-
-        async function startSystem() {
-            setLoading(true);
             try {
-                // 向 API 請求資料
-                console.log("正在連線至 API...");
-                const response = await fetch(`${API_URL}?action=getSummary&id=${SHEET_ID}&pin=${USER_PIN}`);
-                const result = await response.json();
-                console.log("API 回應內容:", result);
-                
-                if (result.status === "auth_fail") {
-                    alert("⚠️ 驗證失敗：密碼不正確");
-                    localStorage.removeItem("dm_pin");
-                    location.reload(); 
-                    return;
-                }
-
-                if (result.status === "success") {
-                    // 驗證成功，記住密碼
-                    localStorage.setItem("dm_pin", USER_PIN);
-
-                    // 1. 更新畫面數據
-                    if (document.getElementById('user-display')) 
-                        document.getElementById('user-display').innerText = "您好！ " + result.data.nickname;
-                    if (document.getElementById('days-val')) 
-                        document.getElementById('days-val').innerText = result.data.remainingDays;
-
-                    // 2. 核心動作：強制切換視圖 (解決一片空白的關鍵)
-                    document.getElementById('login-screen').style.display = 'none';
-                    document.getElementById('view-home').classList.add('active');
-                    console.log("視圖切換成功！");
-
-                    // 3. 背景載入任務
-                    await loadTasks();
-                }
-            } catch (error) {
-                console.error("啟動過程發生錯誤:", error);
-                alert("連線失敗！請確認 API 是否已部署為「所有人可存取」。");
-            }
-            setLoading(false);
-        }
-
-        async function loadTasks() {
-            const dateStr = new Date().toLocaleDateString('sv-SE'); 
-            try {
-                const res = await fetch(`${API_URL}?action=getTasks&id=${SHEET_ID}&pin=${USER_PIN}&date=${dateStr}`);
+                const res = await fetch(`${API_URL}?action=getSummary&id=${SHEET_ID}&pin=${pin}`);
                 const json = await res.json();
-                const list = document.getElementById('task-list');
-                if (!list || json.status !== "success") return;
+                
+                console.log("收到資料:", json);
 
-                list.innerHTML = "";
-                json.data.forEach((task, i) => {
-                    const div = document.createElement('div');
-                    div.className = `task-item ${i >= 3 ? 'task-hidden' : ''}`;
-                    div.innerHTML = `
-                        <div class="task-checkbox" style="${task.isDone ? 'background:var(--primary);' : ''}"></div>
-                        <div style="flex:1; ${task.isDone ? 'color:#aaa; text-decoration:line-through;' : ''}">${task.name}</div>
-                    `;
-                    list.appendChild(div);
-                });
-
-                // 3+N 邏輯：超過 3 個顯示展開按鈕
-                if (json.data.length > 3) {
-                    const more = document.createElement('div');
-                    more.style = "color:#4A90E2; text-align:center; padding:10px; font-weight:bold; cursor:pointer;";
-                    more.innerText = `... 展開其餘 ${json.data.length - 3} 個任務`;
-                    more.onclick = () => {
-                        document.querySelectorAll('.task-hidden').forEach(el => el.classList.remove('task-hidden'));
-                        more.style.display = 'none';
-                    };
-                    list.appendChild(more);
+                if (json.status === "success") {
+                    // 強制填入資料
+                    document.getElementById('show-name').innerText = json.data.nickname;
+                    document.getElementById('show-days').innerText = json.data.remainingDays;
+                    
+                    // 強制切換畫面
+                    document.getElementById('login-box').style.display = 'none';
+                    document.getElementById('app-content').style.display = 'block';
+                    
+                    alert("🎉 成功！抓到暱稱：" + json.data.nickname);
+                } else {
+                    alert("❌ 驗證失敗：" + json.message);
                 }
-            } catch (e) { console.warn("任務載入失敗"); }
-        }
-
-        function setLoading(show) {
-            const el = document.getElementById('loading');
-            if (el) el.style.display = show ? 'flex' : 'none';
+            } catch (e) {
+                alert("❌ 發生錯誤：" + e.message);
+            }
         }
     </script>
 </body>
