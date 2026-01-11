@@ -3,66 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>夢想機 最終測試</title>
+    <title>夢想機 偵錯模式</title>
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 20px; background: #f0f2f5; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 320px; margin: auto; }
-        input { width: 80%; padding: 12px; font-size: 18px; margin: 20px 0; text-align: center; border: 1px solid #ddd; border-radius: 8px; }
-        button { width: 85%; padding: 12px; background: #007AFF; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
-        #app-ui { display: none; } /* 初始隱藏 */
+        body { font-family: sans-serif; text-align: center; padding: 20px; background: #f4f7f9; }
+        .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 320px; margin: auto; }
+        input { width: 80%; padding: 15px; font-size: 20px; text-align: center; margin: 20px 0; border: 1px solid #ddd; border-radius: 12px; }
+        button { width: 90%; padding: 15px; background: #4A90E2; color: white; border: none; border-radius: 12px; font-size: 18px; cursor: pointer; }
+        #view-dashboard { display: none; } /* 初始隱藏 */
     </style>
 </head>
 <body>
 
-    <div class="card" id="login-ui">
-        <h2>夢想機 驗證</h2>
+    <div id="view-login" class="card">
+        <h2 style="color:#4A90E2">系統身分驗證</h2>
         <p>請輸入 4 位數驗證碼</p>
-        <input type="password" id="input-pin" placeholder="1234" maxlength="4">
-        <button onclick="runTest()">進入系統</button>
+        <input type="password" id="pin-input" placeholder="預設 1234" maxlength="4">
+        <button onclick="runSystem()">進入系統</button>
     </div>
 
-    <div class="card" id="app-ui">
-        <h2 style="color:#007AFF">✅ 連線成功！</h2>
-        <h3 id="display-name">正在讀取...</h3>
-        <p>剩餘天數：<span id="display-days" style="font-size:24px; font-weight:bold;">--</span> 天</p>
-        <button onclick="location.reload()" style="background:#8e8e93; margin-top:20px;">重新整理</button>
+    <div id="view-dashboard" class="card">
+        <h2 id="name-box">讀取中...</h2>
+        <div style="font-size: 40px; font-weight: bold; color: #4A90E2; margin: 20px 0;">
+            <span id="days-box">--</span> 天
+        </div>
+        <p>剩餘挑戰天數</p>
+        <button onclick="localStorage.removeItem('dm_pin'); location.reload();" style="background:#8e8e93; margin-top:20px;">登出系統</button>
     </div>
 
     <script>
+        // 1. 初始化檢查
         const urlParams = new URLSearchParams(window.location.search);
         const SHEET_ID = urlParams.get('id');
         const API_URL = "https://script.google.com/macros/s/AKfycbwEA2bbL94YtNbunJj_Dej5UidtvExIKm28tctKsdEOUIuIdfBpNkHGCr0WXQLQzBVYew/exec";
+        
+        let USER_PIN = localStorage.getItem("dm_pin");
 
-        async function runTest() {
-            const pin = document.getElementById('input-pin').value;
-            if(!pin) return alert("請輸入密碼");
-            
-            alert("1. 正在向 Google 索取資料...");
+        // 如果之前登入過，自動執行
+        window.onload = () => {
+            console.log("系統已啟動，目標 ID:", SHEET_ID);
+            if (USER_PIN) runSystem();
+        };
+
+        async function runSystem() {
+            const inputEl = document.getElementById('pin-input');
+            if (!USER_PIN && inputEl) USER_PIN = inputEl.value;
+            if (!USER_PIN) return alert("請輸入驗證碼");
+
+            console.log("正在嘗試連線 API...");
 
             try {
-                const response = await fetch(`${API_URL}?action=getSummary&id=${SHEET_ID}&pin=${pin}`);
-                const result = await response.json();
+                const res = await fetch(`${API_URL}?action=getSummary&id=${SHEET_ID}&pin=${USER_PIN}`);
+                const json = await res.json();
 
-                if (result.status === "success") {
-                    // 先彈出視窗讓你看到資料，這步最重要！
-                    alert("🎉 成功！\n抓到暱稱：" + result.data.nickname + "\n剩餘天數：" + result.data.remainingDays);
+                if (json.status === "success") {
+                    localStorage.setItem("dm_pin", USER_PIN);
+                    
+                    // --- 核心偵錯區：使用安全檢查防止 Null 報錯 ---
+                    const nameTag = document.getElementById('name-box');
+                    const daysTag = document.getElementById('days-box');
 
-                    // 安全地填入網頁文字
-                    if(document.getElementById('display-name')) {
-                        document.getElementById('display-name').innerText = "您好！ " + result.data.nickname;
+                    if (nameTag && daysTag) {
+                        nameTag.innerText = "您好！ " + json.data.nickname;
+                        daysTag.innerText = json.data.remainingDays;
+                    } else {
+                        // 如果在 HTML 裡找不到格子，就用彈窗強制顯示資料
+                        alert("✅ 連線成功但找不到顯示標籤！\n暱稱：" + json.data.nickname + "\n天數：" + json.data.remainingDays);
                     }
-                    if(document.getElementById('display-days')) {
-                        document.getElementById('display-days').innerText = result.data.remainingDays;
-                    }
 
-                    // 切換畫面顯示
-                    document.getElementById('login-ui').style.display = 'none';
-                    document.getElementById('app-ui').style.display = 'block';
+                    // 畫面切換
+                    const loginDiv = document.getElementById('view-login');
+                    const dashDiv = document.getElementById('view-dashboard');
+                    if (loginDiv) loginDiv.style.display = 'none';
+                    if (dashDiv) dashDiv.style.display = 'block';
+
                 } else {
-                    alert("❌ 驗證失敗：" + result.message);
+                    alert("驗證失敗：" + json.message);
+                    localStorage.removeItem("dm_pin");
                 }
-            } catch (error) {
-                alert("❌ 發生錯誤：" + error.message);
+            } catch (e) {
+                alert("❌ 系統錯誤：" + e.message);
             }
         }
     </script>
